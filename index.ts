@@ -1,13 +1,13 @@
-// index.js
+// index.ts
 
-// Initialize production check
-const isProduction = 
-  typeof process !== 'undefined' && 
-  process.env && 
+// Check if we are in production
+const isProduction: boolean =
+  typeof process !== 'undefined' &&
+  typeof process.env !== 'undefined' &&
   process.env.NODE_ENV === 'production';
 
 // Safely access Vite env
-const getViteEnv = () => {
+const getViteEnv = (): Record<string, any> => {
   try {
     return typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env : {};
   } catch {
@@ -16,23 +16,22 @@ const getViteEnv = () => {
 };
 
 // Resolve developer ID
-const resolveDevId = () => {
+const resolveDevId = (): string | null => {
   const viteEnv = getViteEnv();
 
-  // Priority: Vite -> process.env -> CRA
   return (
-    viteEnv.VITE_DEV_ID || 
-    (typeof process !== 'undefined' && process.env?.DEV_ID) || 
-    process.env?.REACT_APP_DEV_ID || 
+    viteEnv.VITE_DEV_ID ||
+    (typeof process !== 'undefined' && process.env?.DEV_ID) ||
+    (typeof process !== 'undefined' && process.env?.REACT_APP_DEV_ID) ||
     null
   );
 };
 
-// Initialize current Dev ID
-let currentDevId = isProduction ? null : resolveDevId();
+let currentDevId: string | null = isProduction ? null : resolveDevId();
 
-// Check browser environment
-const isBrowser = typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
+// Check if we're running in browser
+const isBrowser: boolean =
+  typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
 
 // Try to get Dev ID from localStorage if not set
 if (isBrowser && !isProduction) {
@@ -44,7 +43,7 @@ if (isBrowser && !isProduction) {
 }
 
 // Core API Functions
-const setDevId = (id) => {
+const setDevId = (id: string) => {
   if (isProduction) return;
   currentDevId = id;
   if (isBrowser) {
@@ -52,9 +51,9 @@ const setDevId = (id) => {
   }
 };
 
-const getDevId = () => currentDevId;
+const getDevId = (): string | null => currentDevId;
 
-const shouldDebug = (targetDevId) => {
+const shouldDebug = (targetDevId?: string): boolean => {
   if (isProduction || !currentDevId) return false;
   return targetDevId ? currentDevId === targetDevId : true;
 };
@@ -65,9 +64,17 @@ const triggerDebugger = () => {
   }
 };
 
+// Logger type
+type Logger = {
+  log: (...args: any[]) => void;
+  warn: (...args: any[]) => void;
+  error: (...args: any[]) => void;
+  debug: (...args: any[]) => void;
+};
+
 // Create logger instance for a specific Dev ID
-const createDevLogger = (loggerDevId) => {
-  if (isProduction) {
+const createDevLogger = (loggerDevId: string | null): Logger => {
+  if (isProduction || !loggerDevId) {
     return {
       log: () => {},
       warn: () => {},
@@ -76,25 +83,25 @@ const createDevLogger = (loggerDevId) => {
     };
   }
 
-  const formatMessage = (type, args) => {
+  const formatMessage = (type: string, args: any[]): any[] => {
     const timestamp = new Date().toISOString().slice(11, 23);
     return [`[${loggerDevId}] [${timestamp}]`, ...args];
   };
 
   return {
-    log: (...args) => {
+    log: (...args: any[]) => {
       if (currentDevId !== loggerDevId) return;
       console.log(...formatMessage('log', args));
     },
-    warn: (...args) => {
+    warn: (...args: any[]) => {
       if (currentDevId !== loggerDevId) return;
       console.warn(...formatMessage('warn', args));
     },
-    error: (...args) => {
+    error: (...args: any[]) => {
       if (currentDevId !== loggerDevId) return;
       console.error(...formatMessage('error', args));
     },
-    debug: (...args) => {
+    debug: (...args: any[]) => {
       if (currentDevId !== loggerDevId) return;
       const message = formatMessage('debug', args);
       try {
@@ -109,10 +116,10 @@ const createDevLogger = (loggerDevId) => {
   };
 };
 
-// Default logger instance
+// Default logger
 const defaultLogger = createDevLogger(currentDevId);
 
-// Export public API
+// Exports
 export {
   setDevId,
   getDevId,
