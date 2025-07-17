@@ -1,22 +1,22 @@
 {
   "name": "dev-id-logger",
-  "version": "1.1.3",
+  "version": "1.1.4",
   "description": "Scoped logging and debugging for teams based on dev ID - works in browser and Node.js",
   "main": "./index.js",
   "module": "./index.js",
   "types": "./index.d.ts",
   "exports": {
     ".": {
-      "import": "./index.js",
-      "require": "./index.cjs",
-      "default": "./index.js"
+      "import": "./index.ts",
+      "require": "./index.cts",
+      "default": "./index.ts"
     },
     "./package.json": "./package.json"
   },
   "type": "module",
   "files": [
-    "index.js",
-    "index.cjs",
+    "index.ts",
+    "index.cts",
     "index.d.ts",
     "README.md"
   ],
