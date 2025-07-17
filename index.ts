@@ -1,9 +1,9 @@
 // index.ts
 
-// Initialize production check
+// Check if we are in production
 const isProduction: boolean =
   typeof process !== 'undefined' &&
-  !!process.env &&
+  typeof process.env !== 'undefined' &&
   process.env.NODE_ENV === 'production';
 
 // Safely access Vite env
@@ -19,20 +19,19 @@ const getViteEnv = (): Record<string, any> => {
 const resolveDevId = (): string | null => {
   const viteEnv = getViteEnv();
 
-  // Priority: Vite -> process.env -> CRA
   return (
     viteEnv.VITE_DEV_ID ||
     (typeof process !== 'undefined' && process.env?.DEV_ID) ||
-    process.env?.REACT_APP_DEV_ID ||
+    (typeof process !== 'undefined' && process.env?.REACT_APP_DEV_ID) ||
     null
   );
 };
 
-// Initialize current Dev ID
 let currentDevId: string | null = isProduction ? null : resolveDevId();
 
-// Check browser environment
-const isBrowser: boolean = typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
+// Check if we're running in browser
+const isBrowser: boolean =
+  typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
 
 // Try to get Dev ID from localStorage if not set
 if (isBrowser && !isProduction) {
@@ -44,7 +43,7 @@ if (isBrowser && !isProduction) {
 }
 
 // Core API Functions
-const setDevId = (id: string): void => {
+const setDevId = (id: string) => {
   if (isProduction) return;
   currentDevId = id;
   if (isBrowser) {
@@ -59,14 +58,14 @@ const shouldDebug = (targetDevId?: string): boolean => {
   return targetDevId ? currentDevId === targetDevId : true;
 };
 
-const triggerDebugger = (): void => {
+const triggerDebugger = () => {
   if (shouldDebug()) {
     debugger;
   }
 };
 
 // Logger type
-type DevLogger = {
+type Logger = {
   log: (...args: any[]) => void;
   warn: (...args: any[]) => void;
   error: (...args: any[]) => void;
@@ -74,13 +73,13 @@ type DevLogger = {
 };
 
 // Create logger instance for a specific Dev ID
-const createDevLogger = (loggerDevId: string): DevLogger => {
-  if (isProduction) {
+const createDevLogger = (loggerDevId: string | null): Logger => {
+  if (isProduction || !loggerDevId) {
     return {
       log: () => {},
       warn: () => {},
       error: () => {},
-      debug: () => {},
+      debug: () => {}
     };
   }
 
@@ -90,19 +89,19 @@ const createDevLogger = (loggerDevId: string): DevLogger => {
   };
 
   return {
-    log: (...args: any[]): void => {
+    log: (...args: any[]) => {
       if (currentDevId !== loggerDevId) return;
       console.log(...formatMessage('log', args));
     },
-    warn: (...args: any[]): void => {
+    warn: (...args: any[]) => {
       if (currentDevId !== loggerDevId) return;
       console.warn(...formatMessage('warn', args));
     },
-    error: (...args: any[]): void => {
+    error: (...args: any[]) => {
       if (currentDevId !== loggerDevId) return;
       console.error(...formatMessage('error', args));
     },
-    debug: (...args: any[]): void => {
+    debug: (...args: any[]) => {
       if (currentDevId !== loggerDevId) return;
       const message = formatMessage('debug', args);
       try {
@@ -113,20 +112,20 @@ const createDevLogger = (loggerDevId: string): DevLogger => {
         console.log(...message);
         console.trace();
       }
-    },
+    }
   };
 };
 
-// Default logger instance
-const defaultLogger = createDevLogger(currentDevId || '');
+// Default logger
+const defaultLogger = createDevLogger(currentDevId);
 
-// Export public API
+// Exports
 export {
   setDevId,
   getDevId,
   shouldDebug,
   createDevLogger,
-  triggerDebugger,
+  triggerDebugger
 };
 
 export const log = defaultLogger.log;
